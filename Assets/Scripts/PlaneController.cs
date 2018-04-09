@@ -5,12 +5,8 @@ using UnityEngine;
 
 public class PlaneController : MonoBehaviour, IResetable
 {
-	private GameObject _planeObject = null;
-	public GameObject PlaneObject
-	{
-		get { return _planeObject; }
-		protected internal set { _planeObject = value; }
-	}
+	// todo: store the pool Plane belongs to
+	public GameObject GameObject { get; protected internal set; }
 	
 	private Quaternion _direction;
 	private Vector3 _position;
@@ -20,10 +16,10 @@ public class PlaneController : MonoBehaviour, IResetable
 	// Use this for initialization
 	void Start ()
 	{
-		if (null != _planeObject)
+		if (null != GameObject)
 		{
-			_direction = _planeObject.transform.rotation;
-			_position = _planeObject.transform.position;
+			_direction = GameObject.transform.rotation;
+			_position = GameObject.transform.position;
 			_speed = _defaultSpeed;
 		}
 	}
@@ -36,22 +32,22 @@ public class PlaneController : MonoBehaviour, IResetable
 	// Interface and public methods
 	public void Reset()
 	{
-		_planeObject.SetActive(false);
-		_planeObject.transform.position = Vector3.zero;
-		_planeObject.transform.rotation = Quaternion.AngleAxis(90.0f, Vector3.forward);
+		GameObject.SetActive(false);
+		GameObject.transform.position = Vector3.zero;
+		GameObject.transform.rotation = Quaternion.AngleAxis(90.0f, Vector3.forward);
 	}
 
 	public void SetActive(bool value)
 	{
-		_planeObject.SetActive(value);
+		GameObject.SetActive(value);
 	}
 	// private methods
 	private void HandleMovement()
 	{
-		_direction = _planeObject.transform.rotation;
-		_position = _planeObject.transform.position;
+		_direction = GameObject.transform.rotation;
+		_position = GameObject.transform.position;
 
 		Vector3 newPosition = _position + _speed * Time.deltaTime * gameObject.transform.up;
-		_planeObject.transform.position = newPosition;
+		GameObject.transform.position = newPosition;
 	}
 }

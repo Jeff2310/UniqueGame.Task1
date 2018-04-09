@@ -11,16 +11,17 @@ namespace DefaultNamespace
                 GameObject planeObject = 
                     Instantiate(Resources.Load("plane"), Vector2.zero, Quaternion.AngleAxis(90.0f, Vector3.forward)) as GameObject;
                 planeObject.AddComponent<PlaneController>();
-                planeObject.GetComponent<PlaneController>().PlaneObject = planeObject;
+                planeObject.GetComponent<PlaneController>().GameObject = planeObject;
                 DontDestroyOnLoad(planeObject);
                 return planeObject;
             }
-
+            
+            // todo: store the pool that spawned plane belongs to
             public static GameObject SpawnPlane(Vector2 position, Quaternion direction)
             {
                 GameObject planeObject = Instantiate(Resources.Load("plane"), new Vector3(position.x, position.y, 0.0f), direction) as GameObject;
                 planeObject.AddComponent<PlaneController>();
-                planeObject.GetComponent<PlaneController>().PlaneObject = planeObject;
+                planeObject.GetComponent<PlaneController>().GameObject = planeObject;
                 DontDestroyOnLoad(planeObject);
                 return planeObject;
             }

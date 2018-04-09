@@ -57,6 +57,10 @@
     <Compile Include="Assets\Scripts\IResetable.cs" />
     <Compile Include="Assets\Scripts\ObjectPool.cs" />
     <Compile Include="Assets\Scripts\PlaneController.cs" />
+    <Compile Include="Assets\Scripts\ProjectileController.cs" />
+    <Compile Include="Assets\Scripts\TurretController.cs" />
+    <None Include="Assets\Resources\SpaceShooterRedux\Spritesheet\sheet.xml" />
+    <None Include="Assets\Resources\SpaceShooterRedux\license.txt" />
     <Reference Include="UnityEngine.UI">
       <HintPath>/opt/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
     </Reference>

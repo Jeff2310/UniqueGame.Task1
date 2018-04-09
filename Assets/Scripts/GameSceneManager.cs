@@ -5,9 +5,10 @@ using UnityEngine;
 
 public class GameSceneManager : MonoBehaviour
 {
-	private PlanePool _planePool;
-
+	public PlanePool _planePool;
 	private Queue<GameObject> _planeQueue;
+
+	public GameObject TurretGameObject;
 	// Use this for initialization
 	void Start ()
 	{
@@ -20,10 +21,12 @@ public class GameSceneManager : MonoBehaviour
 		*/
 		_planePool = PlanePool.GetInstance();
 		_planeQueue = new Queue<GameObject>();
+		TurretGameObject = GameObject.Find("turret");
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		// todo: write a event system
 		if (Input.GetKeyDown(KeyCode.S))
 		{
 			GameObject planeObject = _planePool.GetObject();
