@@ -6,8 +6,9 @@ using UnityEngine.Experimental.UIElements;
 public class TurretController : MonoBehaviour
 {
 	public GameObject GameObject { get; protected internal set; }
+	public event EventHandler HitByEnemy;
 
-	private Quaternion _direction;
+	public int Health = 4;
 
 	// Use this for initialization
 	void Start()
@@ -29,7 +30,17 @@ public class TurretController : MonoBehaviour
 		Vector3 mousePosition = Camera.main.ScreenToWorldPoint(mousePoint);
 		Vector3 turretPosition = GameObject.transform.position;
 		Vector3 aimVector = mousePosition - turretPosition;
-		_direction = Quaternion.FromToRotation(Vector3.up, aimVector);
+		var _direction = Quaternion.FromToRotation(Vector3.up, aimVector);
 		GameObject.transform.rotation = _direction;
+	}
+	
+	private void OnTriggerEnter2D(Collider2D other)
+	{
+		// hit by plane
+		if (other.gameObject.CompareTag("Enemy") == true)
+		{
+			HitByEnemy(this, EventArgs.Empty);
+			return;
+		}
 	}
 }

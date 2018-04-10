@@ -11,8 +11,11 @@ public class PlaneController : MonoBehaviour, IResetable
 	private Vector3 _position;
 	private static float _defaultSpeed = 3.0f;
 	private float _speed;
+	private int maximumHealth = 3;
+	public int Health;
 
 	public event EventHandler HitByProjectile;
+	public event EventHandler HitByPlayer;
 	public event EventHandler ReachBound;
 	
 	// Use this for initialization
@@ -24,6 +27,8 @@ public class PlaneController : MonoBehaviour, IResetable
 			_position = GameObject.transform.position;
 			_speed = _defaultSpeed;
 		}
+
+		Health = maximumHealth;
 	}
 	
 	// Update is called once per frame
@@ -37,6 +42,7 @@ public class PlaneController : MonoBehaviour, IResetable
 		GameObject.SetActive(false);
 		GameObject.transform.position = Vector3.zero;
 		GameObject.transform.rotation = Quaternion.AngleAxis(90.0f, Vector3.forward);
+		Health = maximumHealth;
 	}
 
 	public void SetActive(bool value)
@@ -59,6 +65,7 @@ public class PlaneController : MonoBehaviour, IResetable
 		if (other.gameObject.CompareTag("Projectile") == true)
 		{
 			HitByProjectile(this, EventArgs.Empty);
+			return;
 		}
 	}
 
@@ -67,6 +74,11 @@ public class PlaneController : MonoBehaviour, IResetable
 		if (other.gameObject.CompareTag("Bound") == true)
 		{
 			ReachBound(this, EventArgs.Empty);
+		}
+		// hit by player turret
+		if (other.gameObject.CompareTag("Player") == true)
+		{
+			HitByPlayer(this, EventArgs.Empty);
 		}
 	}
 }

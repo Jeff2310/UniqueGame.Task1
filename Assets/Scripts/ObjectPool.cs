@@ -41,9 +41,7 @@ public class ObjectPool
             }
             else
             {
-                GameObject returnObject = CreateObject();
-                returnObject.SetActive(true);
-                return returnObject;
+                return null;
             }
         }
 

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 using Random = System.Random;
 
@@ -25,6 +26,7 @@ public class GameSceneManager : MonoBehaviour
 		foreach (var planeObject in _freePlanePool.ObjectStack)
 		{
 			planeObject.GetComponent<PlaneController>().HitByProjectile += OnHitByProjectile;
+			planeObject.GetComponent<PlaneController>().HitByPlayer+= OnHitByPlayer;
 			planeObject.GetComponent<PlaneController>().ReachBound += OnReachBound;
 		}
 		
@@ -38,6 +40,7 @@ public class GameSceneManager : MonoBehaviour
 		_projectileQueue = new Queue<GameObject>();
 		
 		TurretGameObject = GameObject.Find("turret");
+		TurretGameObject.GetComponent<TurretController>().HitByEnemy += OnHitByEnemy;
 	}
 	
 	private Random rand = new Random(); 
@@ -47,7 +50,10 @@ public class GameSceneManager : MonoBehaviour
 		if (Input.GetKeyDown(KeyCode.S))
 		{
 			GameObject planeObject = _freePlanePool.GetObject();
+			if (planeObject == null) return;
 			planeObject.transform.position = new Vector3(10.0f, (float)rand.Next(-8, 8), 0.0f);
+			Vector3 aimToTurret = TurretGameObject.transform.position - planeObject.transform.position;
+			planeObject.transform.rotation = Quaternion.FromToRotation(Vector3.up, aimToTurret);
 			_planeQueue.Enqueue(planeObject);
 		}
 
@@ -63,11 +69,26 @@ public class GameSceneManager : MonoBehaviour
 		CheckAndShoot();
 	}
 
+	void Quit()
+	{
+		foreach (var go in _planeQueue)
+		{
+			_freePlanePool.StoreObject(go);
+		}
+
+		foreach (var go in _projectileQueue)
+		{
+			_freeProjectilePool.StoreObject(go);
+		}
+		SceneManager.LoadScene(0);
+	}
+
 	private void CheckAndShoot()
 	{
 		if(Input.GetMouseButtonDown(0))
 		{
 			GameObject projectileObject = _freeProjectilePool.GetObject();
+			if (projectileObject == null) return;
 			projectileObject.transform.rotation = TurretGameObject.transform.rotation;
 			projectileObject.transform.position = GameObject.Find("gunpoint").transform.position;
 			projectileObject.SetActive(true);
@@ -80,16 +101,41 @@ public class GameSceneManager : MonoBehaviour
 		if (sender.GetType().FullName == "PlaneController")
 		{
 			var _sender= sender as PlaneController;
+			_sender.Health--;
+			if (_sender.Health == 0)
+			{
+				_freePlanePool.StoreObject(_sender.GameObject);
+			}
+		}
+	}
+	
+	void OnHitByPlayer(object sender, EventArgs args)
+	{
+		if (sender.GetType().FullName == "PlaneController")
+		{
+			var _sender= sender as PlaneController;
 			_freePlanePool.StoreObject(_sender.GameObject);
 		}
 	}
 	
 	void OnHitByEnemy(object sender, EventArgs args)
 	{
-		if (sender.GetType().FullName == "ProjectileController")
+		var typename = sender.GetType().FullName;
+		if (typename == "TurretController")
+		{
+			var _sender = sender as TurretController;
+			_sender.Health--;
+			if (_sender.Health == 0)
+			{
+				Quit();
+			}
+			return;
+		}
+		if (typename == "ProjectileController")
 		{
 			var _sender= sender as ProjectileController;
 			_freeProjectilePool.StoreObject(_sender.GameObject);
+			return;
 		}
 	}
 
