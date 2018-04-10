@@ -19,7 +19,6 @@ public class TurretController : MonoBehaviour
 	void Update()
 	{
 		AimAtMouse();
-		CheckAndShoot();
 	}
 
 	private void AimAtMouse()
@@ -32,17 +31,5 @@ public class TurretController : MonoBehaviour
 		Vector3 aimVector = mousePosition - turretPosition;
 		_direction = Quaternion.FromToRotation(Vector3.up, aimVector);
 		GameObject.transform.rotation = _direction;
-	}
-	
-	private void CheckAndShoot()
-	{
-		// todo: change to a event-based version
-		if(Input.GetMouseButtonDown(0))
-		{
-			Vector3 gunpointPosition = GameObject.Find("gunpoint").transform.position;
-			GameObject projectileObject = Instantiate(Resources.Load("projectile"), gunpointPosition, _direction) as GameObject;
-			projectileObject.AddComponent<ProjectileController>();
-			projectileObject.GetComponent<ProjectileController>().GameObject = projectileObject;
-		}
 	}
 }

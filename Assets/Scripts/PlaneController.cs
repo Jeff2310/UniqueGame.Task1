@@ -1,17 +1,19 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using DefaultNamespace;
 using UnityEngine;
 
 public class PlaneController : MonoBehaviour, IResetable
 {
-	// todo: store the pool Plane belongs to
 	public GameObject GameObject { get; protected internal set; }
 	
 	private Quaternion _direction;
 	private Vector3 _position;
 	private static float _defaultSpeed = 3.0f;
 	private float _speed;
+
+	public event EventHandler HitByProjectile;
+	public event EventHandler ReachBound;
 	
 	// Use this for initialization
 	void Start ()
@@ -49,5 +51,22 @@ public class PlaneController : MonoBehaviour, IResetable
 
 		Vector3 newPosition = _position + _speed * Time.deltaTime * gameObject.transform.up;
 		GameObject.transform.position = newPosition;
+	}
+
+	private void OnCollisionEnter2D(Collision2D other)
+	{
+		// hit by projectile
+		if (other.gameObject.CompareTag("Projectile") == true)
+		{
+			HitByProjectile(this, EventArgs.Empty);
+		}
+	}
+
+	private void OnTriggerEnter2D(Collider2D other)
+	{
+		if (other.gameObject.CompareTag("Bound") == true)
+		{
+			ReachBound(this, EventArgs.Empty);
+		}
 	}
 }
