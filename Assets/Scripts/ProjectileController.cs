@@ -2,16 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = System.Object;
 
 public class ProjectileController : MonoBehaviour, IResetable
 {
 	public GameObject GameObject { get; protected internal set; }
 	public GameObject Owner { get; protected internal set; }
 	public Vector3 Position { get; protected internal set; }
-
-	public event EventHandler HitByEnemy;
-	public event EventHandler ReachBound;
-	
+		
 	public float Speed;
 	// Use this for initialization
 	void Start ()
@@ -43,7 +41,7 @@ public class ProjectileController : MonoBehaviour, IResetable
 		// hit by projectile
 		if (other.gameObject.CompareTag("Enemy") == true)
 		{
-			HitByEnemy(this, EventArgs.Empty);
+			ShouldDestroy(this, EventArgs.Empty);
 		}
 	}
 	
@@ -51,7 +49,14 @@ public class ProjectileController : MonoBehaviour, IResetable
 	{
 		if (other.gameObject.CompareTag("Bound") == true)
 		{
-			ReachBound(this, EventArgs.Empty);
+			ShouldDestroy(this, EventArgs.Empty);
 		}
+	}
+	
+	public event EventHandler ShouldDestroy;
+
+	public void shouldDestroy(Object sender, EventArgs args)
+	{
+		ShouldDestroy(sender, args);
 	}
 }

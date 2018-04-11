@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Security.Principal;
+using System.Web;
 using UnityEditorInternal;
 using UnityEngine;
 
@@ -15,11 +16,21 @@ public class ObjectPool
         {
             get { return _objectStack; }
         }
+
+        protected string _prefabName;
+        protected Action<GameObject> _attachScript;
+
+        public DelegateHelper.GetController getObjectController;
+        public DelegateHelper.SetController setObjectController;
         
-        protected GameObjectPool(int capacity = 0)
+        protected GameObjectPool(string prefabName, DelegateHelper.GetController getController, DelegateHelper.SetController setController, int capacity = 0)
         {
             _objectStack = new Stack<GameObject>(_maximumObjectCount);
             _maximumObjectCount = capacity;
+            _prefabName = prefabName;
+            getObjectController = getController;
+            setObjectController = setController;
+            
             for (int i = 0; i < capacity; i++)
             {
                 GameObject createdObject = CreateObject();
@@ -58,25 +69,36 @@ public class ObjectPool
     
     public class PlanePool : GameObjectPool
     {
-        public PlanePool(int capacity = 0) : base(capacity) {}
+        public PlanePool(string prefabName, DelegateHelper.GetController getController, DelegateHelper.SetController setController, int capacity = 0) : base(prefabName, getController, setController, capacity) {}
         protected override GameObject CreateObject()
         {
-            return Factories.PlaneFactory.SpawnPlane();
+            return Factories.PlaneFactory.SpawnPlane(_prefabName, (GameObject go) =>{
+                setObjectController(go);
+                (getObjectController(go) as EnemyPlane).GameObject = go;
+            });
         }
 
         protected override void ResetObject(GameObject gameObject)
         {
-            gameObject.GetComponent<PlaneController>().Reset();
+            var controller = getObjectController(gameObject);
+            if (controller is IResetable)
+            {
+                (controller as IResetable).Reset();
+            }
         }
     }
 
     public class ProjectilePool : GameObjectPool
     {
-        public ProjectilePool(int capacity = 0) : base (capacity){}
+        public ProjectilePool(string prefabName, DelegateHelper.GetController getController, DelegateHelper.SetController setController, int capacity = 0) : base(prefabName, getController, setController, capacity) {}
 
         protected override GameObject CreateObject()
         {
-            return Factories.ProjectileFactory.SpawnProjectile();
+            return Factories.ProjectileFactory.SpawnProjectile(_prefabName, (GameObject go) =>
+            {
+                setObjectController(go);
+                (getObjectController(go) as ProjectileController).GameObject = go;
+            });
         }
 
         protected override void ResetObject(GameObject gameObject)

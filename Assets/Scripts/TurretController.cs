@@ -6,20 +6,26 @@ using UnityEngine.Experimental.UIElements;
 public class TurretController : MonoBehaviour
 {
 	public GameObject GameObject { get; protected internal set; }
-	public event EventHandler HitByEnemy;
+	public event EventHandler ShouldDestroy;
 
-	public int Health = 4;
+	public int MaximumHealth = 4;
+	public int Health;
 
 	// Use this for initialization
 	void Start()
 	{
 		GameObject = GameObject.Find("turret");
+		Health = MaximumHealth;
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
 		AimAtMouse();
+		if (Health <= 0)
+		{
+			ShouldDestroy(this, EventArgs.Empty);
+		}
 	}
 
 	private void AimAtMouse()
@@ -39,7 +45,7 @@ public class TurretController : MonoBehaviour
 		// hit by plane
 		if (other.gameObject.CompareTag("Enemy") == true)
 		{
-			HitByEnemy(this, EventArgs.Empty);
+			Health--;
 			return;
 		}
 	}

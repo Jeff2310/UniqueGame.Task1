@@ -22,11 +22,17 @@
           </e>
         </e>
         <e p="Scripts" t="Include">
+          <e p="BoostRealmController.cs" t="Include" />
+          <e p="ButtonEvent.cs" t="Include" />
+          <e p="DelegateHelper.cs" t="Include" />
+          <e p="EnemyPlane.cs" t="Include" />
           <e p="Factories.cs" t="Include" />
           <e p="GameSceneManager.cs" t="Include" />
           <e p="IResetable.cs" t="Include" />
+          <e p="IScriptable.cs" t="Include" />
+          <e p="LeaderPlaneController.cs" t="Include" />
+          <e p="NormalPlaneController.cs" t="Include" />
           <e p="ObjectPool.cs" t="Include" />
-          <e p="PlaneController.cs" t="Include" />
           <e p="ProjectileController.cs" t="Include" />
           <e p="TurretController.cs" t="Include" />
         </e>

@@ -52,11 +52,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\BoostRealmController.cs" />
+    <Compile Include="Assets\Scripts\ButtonEvent.cs" />
+    <Compile Include="Assets\Scripts\DelegateHelper.cs" />
+    <Compile Include="Assets\Scripts\EnemyPlane.cs" />
     <Compile Include="Assets\Scripts\Factories.cs" />
     <Compile Include="Assets\Scripts\GameSceneManager.cs" />
     <Compile Include="Assets\Scripts\IResetable.cs" />
+    <Compile Include="Assets\Scripts\IScriptable.cs" />
+    <Compile Include="Assets\Scripts\LeaderPlaneController.cs" />
+    <Compile Include="Assets\Scripts\NormalPlaneController.cs" />
     <Compile Include="Assets\Scripts\ObjectPool.cs" />
-    <Compile Include="Assets\Scripts\PlaneController.cs" />
     <Compile Include="Assets\Scripts\ProjectileController.cs" />
     <Compile Include="Assets\Scripts\TurretController.cs" />
     <None Include="Assets\Resources\SpaceShooterRedux\Spritesheet\sheet.xml" />

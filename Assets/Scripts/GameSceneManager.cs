@@ -4,43 +4,59 @@ using System.Collections.Generic;
 using System.Net;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using UnityEngine.Video;
 using Object = UnityEngine.Object;
 using Random = System.Random;
 
 public class GameSceneManager : MonoBehaviour
 {
 	private ObjectPool.PlanePool _freePlanePool;
-	private Queue<GameObject> _planeQueue;
-
+	private ObjectPool.PlanePool _freeLeaderPool;
 	private ObjectPool.ProjectilePool _freeProjectilePool;
-	private Queue<GameObject> _projectileQueue;
 
 	public GameObject TurretGameObject;
 	// Use this for initialization
-	void Start ()
+
+	public event EventHandler Quit;
+
+	void Awake ()
 	{
-		_freePlanePool = new ObjectPool.PlanePool(30);
-		_freeProjectilePool = new ObjectPool.ProjectilePool(50);
+		_freePlanePool = new ObjectPool.PlanePool("normal_plane", 
+			delegate(GameObject go) { return go.GetComponent<NormalPlaneController>(); },
+			delegate(GameObject go) { go.AddComponent<NormalPlaneController>(); },
+			30);
+		_freeProjectilePool = new ObjectPool.ProjectilePool("projectile", 
+			delegate(GameObject go) { return go.GetComponent<ProjectileController>(); },
+			delegate(GameObject go) { go.AddComponent<ProjectileController>(); },
+			50);
+		_freeLeaderPool = new ObjectPool.PlanePool("leader_plane", 
+			delegate(GameObject go) { return go.GetComponent<LeaderPlaneController>(); },
+			delegate(GameObject go) { go.AddComponent<LeaderPlaneController>(); },
+			30);
+		
+		Quit += OnQuit;
 		
 		foreach (var planeObject in _freePlanePool.ObjectStack)
 		{
-			planeObject.GetComponent<PlaneController>().HitByProjectile += OnHitByProjectile;
-			planeObject.GetComponent<PlaneController>().HitByPlayer+= OnHitByPlayer;
-			planeObject.GetComponent<PlaneController>().ReachBound += OnReachBound;
+			planeObject.GetComponent<NormalPlaneController>().HitByProjectile += OnHitByProjectile;
+			planeObject.GetComponent<NormalPlaneController>().ShouldDestroy += OnShouldDestroy;
+		}
+		
+		foreach (var planeObject in _freeLeaderPool.ObjectStack)
+		{
+			planeObject.GetComponent<LeaderPlaneController>().HitByProjectile += OnHitByProjectile;
+			planeObject.GetComponent<LeaderPlaneController>().ShouldDestroy += OnShouldDestroy;
 		}
 		
 		foreach (var projectileObject in _freeProjectilePool.ObjectStack)
 		{
-			projectileObject.GetComponent<ProjectileController>().HitByEnemy += OnHitByEnemy;
-			projectileObject.GetComponent<ProjectileController>().ReachBound += OnReachBound;
+			projectileObject.GetComponent<ProjectileController>().ShouldDestroy += OnShouldDestroy;
 		}
 		
-		_planeQueue = new Queue<GameObject>();
-		_projectileQueue = new Queue<GameObject>();
-		
 		TurretGameObject = GameObject.Find("turret");
-		TurretGameObject.GetComponent<TurretController>().HitByEnemy += OnHitByEnemy;
+		TurretGameObject.GetComponent<TurretController>().ShouldDestroy += OnShouldDestroy;
 	}
 	
 	private Random rand = new Random(); 
@@ -52,31 +68,32 @@ public class GameSceneManager : MonoBehaviour
 			GameObject planeObject = _freePlanePool.GetObject();
 			if (planeObject == null) return;
 			planeObject.transform.position = new Vector3(10.0f, (float)rand.Next(-8, 8), 0.0f);
-			Vector3 aimToTurret = TurretGameObject.transform.position - planeObject.transform.position;
+			Vector3 aimToTurret = Vector3.Normalize(TurretGameObject.transform.position - planeObject.transform.position);
 			planeObject.transform.rotation = Quaternion.FromToRotation(Vector3.up, aimToTurret);
-			_planeQueue.Enqueue(planeObject);
+			//planeObject.GetComponent<Rigidbody2D>().velocity = planeObject.GetComponent<NormalPlaneController>().Speed * aimToTurret;
 		}
 
-		if (Input.GetKeyDown(KeyCode.R))
+		if (Input.GetKeyDown(KeyCode.D))
 		{
-			if (_planeQueue.Count > 0)
-			{
-				var plane = _planeQueue.Dequeue();
-				_freePlanePool.StoreObject(plane);
-			}
+			GameObject planeObject = _freeLeaderPool.GetObject();
+			if (planeObject == null) return;
+			planeObject.transform.position = new Vector3(10.0f, (float)rand.Next(-8, 8), 0.0f);
+			Vector3 aimToTurret = Vector3.Normalize(TurretGameObject.transform.position - planeObject.transform.position);
+			planeObject.transform.rotation = Quaternion.FromToRotation(Vector3.up, aimToTurret);
+			//planeObject.GetComponent<Rigidbody2D>().velocity = planeObject.GetComponent<LeaderPlaneController>().Speed * aimToTurret;
 		}
-
+		
 		CheckAndShoot();
 	}
-
-	void Quit()
+	
+	void Cleanup()
 	{
-		foreach (var go in _planeQueue)
+		foreach (var go in GameObject.FindGameObjectsWithTag("Enemy"))
 		{
 			_freePlanePool.StoreObject(go);
 		}
 
-		foreach (var go in _projectileQueue)
+		foreach (var go in GameObject.FindGameObjectsWithTag("Projectile"))
 		{
 			_freeProjectilePool.StoreObject(go);
 		}
@@ -92,66 +109,41 @@ public class GameSceneManager : MonoBehaviour
 			projectileObject.transform.rotation = TurretGameObject.transform.rotation;
 			projectileObject.transform.position = GameObject.Find("gunpoint").transform.position;
 			projectileObject.SetActive(true);
-			_projectileQueue.Enqueue(projectileObject);
 		}
+	}
+	
+	void OnQuit(object sender, EventArgs args)
+	{
+		Cleanup();
 	}
 	
 	void OnHitByProjectile(object sender, EventArgs args)
 	{
-		if (sender.GetType().FullName == "PlaneController")
-		{
-			var _sender= sender as PlaneController;
-			_sender.Health--;
-			if (_sender.Health == 0)
-			{
-				_freePlanePool.StoreObject(_sender.GameObject);
-			}
-		}
 	}
 	
-	void OnHitByPlayer(object sender, EventArgs args)
+	void OnShouldDestroy(object sender, EventArgs args)
 	{
-		if (sender.GetType().FullName == "PlaneController")
+		if (sender is NormalPlaneController)
 		{
-			var _sender= sender as PlaneController;
+			var _sender= sender as NormalPlaneController;
 			_freePlanePool.StoreObject(_sender.GameObject);
 		}
-	}
-	
-	void OnHitByEnemy(object sender, EventArgs args)
-	{
-		var typename = sender.GetType().FullName;
-		if (typename == "TurretController")
-		{
-			var _sender = sender as TurretController;
-			_sender.Health--;
-			if (_sender.Health == 0)
-			{
-				Quit();
-			}
-			return;
-		}
-		if (typename == "ProjectileController")
-		{
-			var _sender= sender as ProjectileController;
-			_freeProjectilePool.StoreObject(_sender.GameObject);
-			return;
-		}
-	}
 
-	void OnReachBound(object sender, EventArgs args)
-	{
-		var typename = sender.GetType().FullName;
-		//Debug.Log(String.Format("a {0} has reached the bound!", typename));
-		if (typename == "PlaneController")
+		if (sender is LeaderPlaneController)
 		{
-			var _sender = sender as PlaneController;
-			_freePlanePool.StoreObject(_sender.GameObject);
+			var _sender = sender as LeaderPlaneController;
+			_freeLeaderPool.StoreObject(_sender.GameObject);
 		}
-		else if (typename == "ProjectileController")
+
+		if (sender is ProjectileController)
 		{
 			var _sender = sender as ProjectileController;
 			_freeProjectilePool.StoreObject(_sender.GameObject);
+		}
+
+		if (sender is TurretController)
+		{
+			Quit(this, EventArgs.Empty);
 		}
 	}
 }
