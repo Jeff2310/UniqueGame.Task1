@@ -3,11 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NormalPlaneController : EnemyPlane
+public class NormalPlaneController : EnemyPlaneBeheviour
 {
-    NormalPlaneController() : base()
+    
+    public NormalPlaneController()
     {
-        MaximumSpeed = 3.0f;
-        MaximumHealth = 3;
+        //Plane.Speed = 3.0f;
+        //Plane.Health = 3;
     }
 }

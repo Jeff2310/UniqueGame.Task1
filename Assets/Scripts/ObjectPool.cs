@@ -1,109 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Security.Principal;
-using System.Web;
-using UnityEditorInternal;
 using UnityEngine;
 
 public class ObjectPool
 {
-    public abstract class GameObjectPool
+    private int _freeObjectCount = 0;
+    private string _prefabName;
+    //private GameObject _prefab;
+    
+    public Transform CachedTransform;
+    
+    private Stack<GameObject> _objectStack;
+    public Stack<GameObject> ObjectStack
     {
-        private int _maximumObjectCount = 0;
-        private int _freeObjectCount = 0;
-        private Stack<GameObject> _objectStack;
-        public Stack<GameObject> ObjectStack
-        {
-            get { return _objectStack; }
-        }
+        get { return _objectStack; }
+    }
 
-        protected string _prefabName;
-        protected Action<GameObject> _attachScript;
-
-        public DelegateHelper.GetController getObjectController;
-        public DelegateHelper.SetController setObjectController;
+    private Action<GameObject> _reset;
+    
+    //public ObjectPool(string prefabName, Action<GameObject> reset, int preAllocObjectCount = 0)
+    public ObjectPool(Action<GameObject> reset)
+    {
+        _objectStack = new Stack<GameObject>();
+        //_prefabName = prefabName;
+        //_prefab = Resources.Load(prefabName) as GameObject;
         
-        protected GameObjectPool(string prefabName, DelegateHelper.GetController getController, DelegateHelper.SetController setController, int capacity = 0)
-        {
-            _objectStack = new Stack<GameObject>(_maximumObjectCount);
-            _maximumObjectCount = capacity;
-            _prefabName = prefabName;
-            getObjectController = getController;
-            setObjectController = setController;
-            
-            for (int i = 0; i < capacity; i++)
-            {
-                GameObject createdObject = CreateObject();
-                createdObject.SetActive(false);
-                _objectStack.Push(createdObject);
-            }
-
-            _freeObjectCount = capacity;
-        }
+        _reset = reset;
         
-        public GameObject GetObject()
+        /*
+        for (int i = 0; i < preAllocObjectCount; i++)
         {
-            if (_freeObjectCount > 0)
-            {
-                GameObject returnObject = _objectStack.Pop();
-                returnObject.SetActive(true);
-                _freeObjectCount--;
-                return returnObject;
-            }
-            else
-            {
-                return null;
-            }
+            _objectStack.Push(CreateObject());
         }
 
-        public void StoreObject(GameObject gameObject)
-        {
-            ResetObject(gameObject);
-            _objectStack.Push(gameObject);
-            _freeObjectCount++;
-        }
-        
-        protected abstract GameObject CreateObject();
-        protected abstract void ResetObject(GameObject gameObject);
+        _freeObjectCount = preAllocObjectCount;
+        */
     }
     
-    public class PlanePool : GameObjectPool
+    public GameObject GetObject(GameObject prefab)
     {
-        public PlanePool(string prefabName, DelegateHelper.GetController getController, DelegateHelper.SetController setController, int capacity = 0) : base(prefabName, getController, setController, capacity) {}
-        protected override GameObject CreateObject()
+        GameObject go;
+        if (_freeObjectCount > 0)
         {
-            return Factories.PlaneFactory.SpawnPlane(_prefabName, (GameObject go) =>{
-                setObjectController(go);
-                (getObjectController(go) as EnemyPlane).GameObject = go;
-            });
+            go = _objectStack.Pop();
+            _freeObjectCount--;
         }
-
-        protected override void ResetObject(GameObject gameObject)
+        else
         {
-            var controller = getObjectController(gameObject);
-            if (controller is IResetable)
-            {
-                (controller as IResetable).Reset();
-            }
+            go = CreateObject(prefab);
         }
+        go.SetActive(true);
+        return go;
     }
 
-    public class ProjectilePool : GameObjectPool
+    public void StoreObject(GameObject gameObject)
     {
-        public ProjectilePool(string prefabName, DelegateHelper.GetController getController, DelegateHelper.SetController setController, int capacity = 0) : base(prefabName, getController, setController, capacity) {}
+        _reset(gameObject);
+        _objectStack.Push(gameObject);
+        _freeObjectCount++;
+    }
 
-        protected override GameObject CreateObject()
-        {
-            return Factories.ProjectileFactory.SpawnProjectile(_prefabName, (GameObject go) =>
-            {
-                setObjectController(go);
-                (getObjectController(go) as ProjectileController).GameObject = go;
-            });
-        }
-
-        protected override void ResetObject(GameObject gameObject)
-        {
-            gameObject.GetComponent<ProjectileController>().Reset();
-        }
+    private GameObject CreateObject(GameObject prefab)
+    {
+        GameObject go = UnityEngine.Object.Instantiate(prefab);
+        go.SetActive(false);
+        go.transform.SetParent(CachedTransform);
+        return go;
     }
 }

@@ -3,14 +3,11 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
-public class LeaderPlaneController : EnemyPlane
-{
-    public static DelegateHelper.GetController getController;
-    public static DelegateHelper.SetController setController;
-    
-    public LeaderPlaneController():base()
+public class LeaderPlaneController : EnemyPlaneBeheviour
+{   
+    public LeaderPlaneController()
     {
-        MaximumSpeed = 4.5f;
-        MaximumHealth = 2;
+        //Plane.Speed = 4.5f;
+        //Plane.Health = 2;
     }
 }
